@@ -1,1 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Will You Be My Valentine? 💕</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --pink: #ff6eb4;
+      --deep-pink: #e91e8c;
+      --blue: #6eb5ff;
+      --deep-blue: #1a6fff;
+      --soft-pink: #ffd6ec;
+      --soft-blue: #d6eaff;
+      --bg1: #ff9fcf;
+      --bg2: #a0c4ff;
+    }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Nunito', sans-serif;
+      overflow-x: hidden;
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+      transition: filter 2s ease;
+      cursor: none;
+    }
+
+    /* Overlay for smooth background colour morph */
+    #moodOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 2s ease;
+      background: linear-gradient(135deg, #3a3a3a 0%, #1a1a2e 100%);
+    }
+    #moodOverlay.visible { opacity: 1; }
+
+    body.gloomy {
+      filter: saturate(0.25) brightness(0.65);
+    }
+    body.warming {
+      filter: saturate(0.75) brightness(0.9);
+    }
+
+    body.joyful {
+      background: linear-gradient(135deg, #ff6eb4 0%, #ffb347 50%, #a0c4ff 100%) !important;
+      animation: rainbowBg 3s infinite alternate;
+    }
+
+    @keyframes rainbowBg {
+      0% { background: linear-gradient(135deg, #ff6eb4, #a0c4ff); }
+      50% { background: linear-gradient(135deg, #ffb347, #ff6eb4); }
+      100% { background: linear-gradient(135deg, #a0c4ff, #ffdf6b); }
+    }
+
+    /* Custom Cursor */
+    #cursor {
+      width: 24px; height: 24px;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 99999;
+      font-size: 20px;
+      transform: translate(-50%, -50%);
+      transition: transform 0.05s;
+    }
+
+    /* Heart Canvas Background */
+    #heartCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Click burst */
+    .click-burst {
+      position: fixed;
+      pointer-events: none;
+      z-index: 99998;
+      font-size: 24px;
+      animation: burstFly 1s forwards ease-out;
+    }
+    @keyframes burstFly {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+      100% { opacity: 0; transform: translate(-50%, -180%) scale(1.5); }
+    }
+
+    /* === SCREENS === */
+    .screen {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+    .screen.active { display: flex; }
+
+    /* === CARD === */
+    .card {
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(16px);
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 32px;
+      padding: 48px 40px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(233,30,140,0.25);
+      animation: floatCard 4s ease-in-out infinite;
+    }
+    @keyframes floatCard {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .card h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      color: #fff;
+      text-shadow: 2px 4px 12px rgba(233,30,140,0.5);
+      margin-bottom: 16px;
+    }
+
+    .card p {
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      color: rgba(255,255,255,0.95);
+      margin-bottom: 32px;
+      font-weight: 600;
+    }
+
+    .card .emoji-big {
+      font-size: clamp(3rem, 10vw, 5rem);
+      display: block;
+      margin-bottom: 16px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .btn {
+      padding: 16px 40px;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .btn-yes {
+      background: linear-gradient(135deg, var(--deep-pink), var(--pink));
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(233,30,140,0.45);
+    }
+    .btn-yes:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 32px rgba(233,30,140,0.6);
+    }
+
+    .btn-no {
+      background: linear-gradient(135deg, var(--deep-blue), var(--blue));
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(26,111,255,0.35);
+      position: absolute;
+    }
+
+    /* GIF decorations */
+    .gif-deco {
+      position: fixed;
+      pointer-events: none;
+      z-index: 5;
+      border-radius: 12px;
+      opacity: 0.85;
+    }
+
+    /* === GLOOMY SCREEN === */
+    #gloomyScreen .card {
+      background: rgba(30,20,40,0.5);
+      border-color: rgba(100,80,120,0.4);
+    }
+    #gloomyScreen h1 { color: #c9a0dc; }
+    #gloomyScreen p { color: #aaa; }
+
+    /* === REALLY SCREEN === */
+    #reallyScreen .subtitle { font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
+
+    /* === JOY SCREEN === */
+    #joyScreen .card {
+      background: rgba(255,255,255,0.35);
+    }
+    .sticker-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 6;
+    }
+    .sticker {
+      position: absolute;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      animation: danceSpin 2s ease-in-out infinite;
+    }
+    @keyframes danceSpin {
+      0% { transform: rotate(-10deg) scale(1); }
+      25% { transform: rotate(10deg) scale(1.2); }
+      50% { transform: rotate(-10deg) scale(1); }
+      75% { transform: rotate(10deg) scale(0.9); }
+      100% { transform: rotate(-10deg) scale(1); }
+    }
+
+    /* Popup */
+    .popup {
+      position: fixed;
+      background: rgba(255,255,255,0.95);
+      border-radius: 24px;
+      padding: 20px 28px;
+      font-size: clamp(1rem, 3vw, 1.3rem);
+      font-weight: 900;
+      color: var(--deep-pink);
+      box-shadow: 0 12px 40px rgba(233,30,140,0.3);
+      z-index: 200;
+      pointer-events: none;
+      animation: popupAnim 3s forwards ease;
+      text-align: center;
+    }
+    @keyframes popupAnim {
+      0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+      15% { opacity: 1; transform: scale(1.1) translateY(0); }
+      25% { transform: scale(1); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: scale(0.8) translateY(-30px); }
+    }
+
+    /* Confetti */
+    .confetti {
+      position: fixed;
+      pointer-events: none;
+      z-index: 300;
+      font-size: 1.5rem;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0.5; }
+    }
+
+    /* Floating hearts on YES click */
+    .float-heart {
+      position: fixed;
+      pointer-events: none;
+      z-index: 99997;
+      font-size: 1.8rem;
+      animation: floatUp 2s forwards ease-out;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-200px) scale(2); }
+    }
+
+    /* Shooting stars */
+    .star {
+      position: fixed;
+      pointer-events: none;
+      z-index: 4;
+      font-size: 1.2rem;
+      animation: shootStar 2s forwards linear;
+    }
+    @keyframes shootStar {
+      0% { opacity: 1; transform: translate(0,0) rotate(45deg); }
+      100% { opacity: 0; transform: translate(200px, 200px) rotate(45deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .card { padding: 32px 24px; }
+      .btn { padding: 14px 28px; font-size: 1rem; }
+    }
+
+    /* Sad rain */
+    .rain-drop {
+      position: fixed;
+      pointer-events: none;
+      z-index: 3;
+      font-size: 1rem;
+      opacity: 0.6;
+      animation: rainFall linear infinite;
+    }
+    @keyframes rainFall {
+      0% { transform: translateY(-30px); }
+      100% { transform: translateY(110vh); }
+    }
+
+    /* Cloud */
+    .sad-cloud {
+      position: fixed;
+      top: 20px;
+      font-size: 3rem;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 3;
+      animation: cloudDrift 8s ease-in-out infinite alternate;
+    }
+    @keyframes cloudDrift {
+      0% { transform: translateX(-20px); }
+      100% { transform: translateX(20px); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Mood overlay for smooth bg transition -->
+<div id="moodOverlay"></div>
+
+<!-- Custom Cursor -->
+<div id="cursor">💕</div>
+
+<!-- Canvas for floating background hearts -->
+<canvas id="heartCanvas"></canvas>
+
+<!-- ===== SCREEN 1: Will you be my Valentine? ===== -->
+<div class="screen active" id="screen1">
+  <div class="card">
+    <span class="emoji-big">💝</span>
+    <h1>Will You Be My Valentine?</h1>
+    <p>My heart skips a beat every time I think of you... 🌸</p>
+    <div class="btn-row" id="btnRow1">
+      <button class="btn btn-yes" onclick="goToReally()">Yes! 💖</button>
+      <button class="btn btn-no" id="noBtn1">No 😢</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2: Really? ===== -->
+<div class="screen" id="screen2">
+  <div class="card">
+    <span class="emoji-big" id="reallyEmoji">🥺</span>
+    <h1 id="reallyTitle">Really?</h1>
+    <p class="subtitle">Are you absolutely, positively sure?</p>
+    <p id="reallyMsg">Because my heart says you're the one... 💗</p>
+    <div class="btn-row" id="btnRow2">
+      <button class="btn btn-yes" onclick="goToJoy()">Yes, really! 💕</button>
+      <button class="btn btn-no" id="noBtn2">No... 😔</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3: Joy ===== -->
+<div class="screen" id="joyScreen">
+  <div class="card">
+    <span class="emoji-big" style="animation: none; font-size: 4rem;">🎉💖🎉</span>
+    <h1>Yay!! You Said Yes!</h1>
+    <p>You've made me the happiest person alive! 🌈✨</p>
+    <p style="font-size: 1.4rem; margin-top: 8px;">I Love You So Much! ❤️‍🔥</p>
+  </div>
+  <div class="sticker-container" id="stickerContainer"></div>
+</div>
+
+<script>
+  // ===== CUSTOM CURSOR =====
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+
+  // ===== CLICK BURSTS =====
+  const bursts = ['💖','💕','✨','💗','🌸','💝','❤️','🎀'];
+  document.addEventListener('click', e => {
+    for(let i = 0; i < 5; i++) {
+      const el = document.createElement('div');
+      el.className = 'click-burst';
+      el.innerText = bursts[Math.floor(Math.random()*bursts.length)];
+      el.style.left = (e.clientX + (Math.random()-0.5)*60) + 'px';
+      el.style.top = (e.clientY + (Math.random()-0.5)*60) + 'px';
+      el.style.animationDelay = (Math.random()*0.3) + 's';
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), 1200);
+    }
+  });
+
+  // ===== FLOATING HEART CANVAS =====
+  const canvas = document.getElementById('heartCanvas');
+  const ctx = canvas.getContext('2d');
+  let hearts = [];
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  function drawHeart(x, y, size, color, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.bezierCurveTo(x, y-size/3, x-size/2, y-size*0.8, x-size/2, y-size*1.1);
+    ctx.bezierCurveTo(x-size/2, y-size*1.6, x, y-size*1.6, x, y-size*1.1);
+    ctx.bezierCurveTo(x, y-size*1.6, x+size/2, y-size*1.6, x+size/2, y-size*1.1);
+    ctx.bezierCurveTo(x+size/2, y-size*0.8, x, y-size/3, x, y);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function spawnHeart() {
+    hearts.push({
+      x: Math.random()*canvas.width,
+      y: canvas.height + 40,
+      size: 8 + Math.random()*18,
+      speed: 0.5 + Math.random()*1.5,
+      alpha: 0.1 + Math.random()*0.35,
+      color: Math.random()<0.5 ? '#ff6eb4' : '#6eb5ff',
+      drift: (Math.random()-0.5)*0.5
+    });
+  }
+
+  function animateHearts() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    hearts.forEach((h,i)=>{
+      h.y -= h.speed;
+      h.x += h.drift;
+      drawHeart(h.x, h.y, h.size, h.color, h.alpha);
+      if(h.y < -60) hearts.splice(i,1);
+    });
+    requestAnimationFrame(animateHearts);
+  }
+  setInterval(spawnHeart, 400);
+  animateHearts();
+
+  // ===== MOOD SYSTEM =====
+  const overlay = document.getElementById('moodOverlay');
+  // mood: 'normal' | 'warning' | 'gloomy'
+  let currentMood = 'normal';
+  let moodTimeout = null;
+
+  function setMood(mood) {
+    if (currentMood === mood) return;
+    currentMood = mood;
+    clearTimeout(moodTimeout);
+
+    const emoji = document.getElementById('reallyEmoji');
+    const title = document.getElementById('reallyTitle');
+    const msg   = document.getElementById('reallyMsg');
+
+    if (mood === 'normal') {
+      document.body.classList.remove('gloomy', 'warming');
+      overlay.classList.remove('visible');
+      overlay.style.opacity = '0';
+      document.querySelectorAll('.rain-drop, .sad-cloud').forEach(e => e.remove());
+      if (emoji) emoji.innerText = '🥺';
+      if (title) title.innerText = 'Really?';
+      if (msg)   msg.innerText   = 'Because my heart says you\'re the one... 💗';
+    } else if (mood === 'warning') {
+      document.body.classList.remove('gloomy');
+      document.body.classList.add('warming');
+      overlay.style.opacity = '0.3';
+      overlay.style.transition = 'opacity 1.5s ease';
+    } else if (mood === 'gloomy') {
+      document.body.classList.remove('warming');
+      document.body.classList.add('gloomy');
+      overlay.classList.add('visible');
+      overlay.style.transition = 'opacity 2s ease';
+      if (emoji) { emoji.innerText = '💔'; emoji.style.animation = 'none'; }
+      if (title) title.innerText = 'My Heart is Breaking...';
+      if (msg)   msg.innerText   = 'Please don\'t go... 🌧️';
+      spawnRain();
+      spawnSadClouds();
+    }
+  }
+
+  // ===== NO BUTTON FLEE =====
+  function makeFleeBtn(btnId, moodCallback) {
+    const btn = document.getElementById(btnId);
+    const row = btn.parentElement;
+    const yesBtn = row.querySelector('.btn-yes');
+
+    let placed = false;
+    function positionBtn() {
+      const rect = yesBtn.getBoundingClientRect();
+      btn.style.position = 'fixed';
+      btn.style.left = (rect.right + 20) + 'px';
+      btn.style.top = rect.top + 'px';
+      btn.style.zIndex = 9999;
+      btn.style.transition = 'left 0.35s cubic-bezier(.22,.68,0,1.2), top 0.35s cubic-bezier(.22,.68,0,1.2)';
+      placed = true;
+    }
+    setTimeout(positionBtn, 120);
+    window.addEventListener('resize', positionBtn);
+
+    let isNear = false;
+    let farTimer = null;
+
+    function handleProximity(cx, cy) {
+      if (!placed) return;
+      const rect = btn.getBoundingClientRect();
+      const dist = Math.hypot(cx - rect.left - rect.width/2, cy - rect.top - rect.height/2);
+      const FLEE_DIST = 100;
+      const FAR_DIST = 220;
+
+      if (dist < FLEE_DIST) {
+        // Button flees
+        const margin = 80;
+        let newX = Math.random() * (window.innerWidth  - btn.offsetWidth  - margin*2) + margin;
+        let newY = Math.random() * (window.innerHeight - btn.offsetHeight - margin*2) + margin;
+        btn.style.left = newX + 'px';
+        btn.style.top  = newY + 'px';
+
+        if (!isNear) {
+          isNear = true;
+          clearTimeout(farTimer);
+          if (moodCallback) moodCallback('near');
+        }
+      } else if (dist > FAR_DIST && isNear) {
+        // Cursor is now far — start recovery timer
+        clearTimeout(farTimer);
+        farTimer = setTimeout(() => {
+          isNear = false;
+          if (moodCallback) moodCallback('far');
+        }, 600);
+      }
+    }
+
+    document.addEventListener('mousemove', e => handleProximity(e.clientX, e.clientY));
+    document.addEventListener('touchmove', e => {
+      const t = e.touches[0];
+      handleProximity(t.clientX, t.clientY);
+    });
+  }
+
+  // ===== SCREEN TRANSITIONS =====
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // Screen 1 → Screen 2
+  window.goToReally = function() {
+    showScreen('screen2');
+    setTimeout(() => {
+      makeFleeBtn('noBtn2', (proximity) => {
+        if (proximity === 'near') {
+          setMood('gloomy');
+        } else {
+          // Mouse moved away — smoothly revert to normal
+          setMood('normal');
+        }
+      });
+    }, 200);
+  }
+
+  // Joy
+  function goToJoy() {
+    setMood('normal');
+    document.body.classList.add('joyful');
+    showScreen('joyScreen');
+    spawnStickers();
+    spawnConfetti();
+    spawnPopups();
+    shootingStars();
+  }
+
+  // Wire up Screen 1 flee → just flee, no mood change
+  makeFleeBtn('noBtn1', null);
+
+  // ===== RAIN =====
+  function spawnRain() {
+    for(let i=0;i<30;i++){
+      const drop = document.createElement('div');
+      drop.className='rain-drop';
+      drop.innerText='💧';
+      drop.style.left=Math.random()*100+'vw';
+      drop.style.animationDuration=(1+Math.random()*2)+'s';
+      drop.style.animationDelay=Math.random()*2+'s';
+      drop.style.fontSize=(0.8+Math.random()*0.8)+'rem';
+      document.body.appendChild(drop);
+    }
+  }
+
+  function spawnSadClouds() {
+    const emojis=['☁️','🌧️','😢'];
+    for(let i=0;i<3;i++){
+      const cloud=document.createElement('div');
+      cloud.className='sad-cloud';
+      cloud.innerText=emojis[i];
+      cloud.style.left=Math.random()*80+'vw';
+      cloud.style.animationDelay=Math.random()*2+'s';
+      document.body.appendChild(cloud);
+    }
+  }
+
+  // ===== STICKERS =====
+  function spawnStickers() {
+    const icons=['🎉','💃','🕺','🌈','⭐','💖','🎊','🥳','🌸','💝','✨','🦋','🎀','🍭','🌟'];
+    const container = document.getElementById('stickerContainer');
+    for(let i=0;i<20;i++){
+      const s=document.createElement('div');
+      s.className='sticker';
+      s.innerText=icons[Math.floor(Math.random()*icons.length)];
+      s.style.left=Math.random()*95+'vw';
+      s.style.top=Math.random()*95+'vh';
+      s.style.animationDuration=(1.5+Math.random()*2)+'s';
+      s.style.animationDelay=Math.random()*1+'s';
+      container.appendChild(s);
+    }
+  }
+
+  // ===== CONFETTI =====
+  function spawnConfetti() {
+    const conf=['🎊','🎉','💖','🌸','✨','💕','🌈','⭐','🎀'];
+    function drop(){
+      for(let i=0;i<8;i++){
+        const c=document.createElement('div');
+        c.className='confetti';
+        c.innerText=conf[Math.floor(Math.random()*conf.length)];
+        c.style.left=Math.random()*100+'vw';
+        c.style.fontSize=(1+Math.random()*1.5)+'rem';
+        const dur=2+Math.random()*3;
+        c.style.animationDuration=dur+'s';
+        c.style.animationDelay=Math.random()*2+'s';
+        document.body.appendChild(c);
+        setTimeout(()=>c.remove(), (dur+2)*1000);
+      }
+    }
+    drop();
+    const interval=setInterval(drop,2000);
+    setTimeout(()=>clearInterval(interval),15000);
+  }
+
+  // ===== POPUPS =====
+  function spawnPopups() {
+    const messages=[
+      '💍 Kalyanam pannikalama? 💍',
+      '🏃‍♂️💨 Oodi polama? 🏃‍♀️',
+      '💖 Kadhal pannalama? 💖',
+      '😘 Lots of Muththaaaaa! 😘',
+      '💋 Mutham! Mutham! Mutham! 💋',
+      '💍 Kalyanam pannikalama? 💍',
+      '😘 Lots of Muththaaaaa! 😘',
+      '🏃‍♂️💨 Oodi polama? 🏃‍♀️',
+      '💖 Kadhal pannalama? 💖',
+      '💋 Lots of Muththaaaaa! 😘💋'
+    ];
+    messages.forEach((msg, i) => {
+      setTimeout(()=>{
+        const popup=document.createElement('div');
+        popup.className='popup';
+        popup.innerText=msg;
+        popup.style.left=(10+Math.random()*60)+'vw';
+        popup.style.top=(10+Math.random()*60)+'vh';
+        document.body.appendChild(popup);
+        setTimeout(()=>popup.remove(),3200);
+      }, i*1200);
+    });
+  }
+
+  // ===== SHOOTING STARS =====
+  function shootingStars() {
+    function shoot(){
+      const s=document.createElement('div');
+      s.className='star';
+      s.innerText='⭐';
+      s.style.left=Math.random()*80+'vw';
+      s.style.top=Math.random()*40+'vh';
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(),2200);
+    }
+    for(let i=0;i<10;i++) setTimeout(shoot, i*400);
+  }
+
+  // Extra floating hearts on YES click
+  document.querySelectorAll('.btn-yes').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      for(let i=0;i<10;i++){
+        const h=document.createElement('div');
+        h.className='float-heart';
+        h.innerText=['💖','💕','❤️','💗','💝'][Math.floor(Math.random()*5)];
+        h.style.left=(e.clientX+(Math.random()-0.5)*80)+'px';
+        h.style.top=(e.clientY)+'px';
+        h.style.animationDelay=(Math.random()*0.5)+'s';
+        document.body.appendChild(h);
+        setTimeout(()=>h.remove(),2200);
+      }
+    });
+  });
+</script>
+</body>
+</html>
